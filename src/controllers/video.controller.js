@@ -1,4 +1,5 @@
 import { isValidObjectId } from "mongoose";
+import { User } from "../models/user.model.js";
 import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -149,6 +150,23 @@ const getVideoById = asyncHandler(async (req, res) => {
     await video.save({
         validateBeforeSave: false,
     });
+
+    if (req.user) {
+        await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                $addToSet: {
+                    watchHistory: videoId,
+                },
+            }
+        );
+        const updatedUser = await User.findById(req.user._id);
+
+console.log(
+    "WATCH HISTORY:",
+    updatedUser.watchHistory
+);
+    }
 
     return res.status(200).json(
         new ApiResponse(
